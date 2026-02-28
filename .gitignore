@@ -1,0 +1,28 @@
+# Data / outputs (do not commit)
+Incoming/
+Processed/
+Diarisation/
+Transcripts/
+Voice_Library/
+
+# Audio + outputs
+*.m4a
+*.mp3
+*.wav
+*.json
+*.srt
+*.vtt
+*.tsv
+*.npy
+
+# Python noise
+__pycache__/
+*.pyc
+
+# Secrets / env
+.env
+
+# OS / OneDrive noise
+.DS_Store
+Thumbs.db
+desktop.ini
