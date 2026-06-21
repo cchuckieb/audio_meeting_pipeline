@@ -142,6 +142,7 @@ def main():
     ap.add_argument("--max_segments", type=int, default=12, help="Max segments to sample per speaker")
     ap.add_argument("--min_segment_seconds", type=float, default=1.2, help="Ignore segments shorter than this")
     ap.add_argument("--min_total_seconds", type=float, default=15.0, help="Skip a speaker entirely if their total selected speech is below this (avoids enrolling/matching against a voiceprint built from too little audio)")
+    ap.add_argument("--min_margin", type=float, default=0.05, help="If the best match's similarity is within this margin of the runner-up, flag the match as ambiguous instead of silently trusting it")
     args = ap.parse_args()
 
     json_path = Path(args.json)
@@ -223,15 +224,28 @@ def main():
 
         best_vp = ""
         best_sim = -1.0
+        second_vp = ""
+        second_sim = -1.0
         for vp_id, emb in existing.items():
             sim = cosine(vp_emb, emb)
             if sim > best_sim:
-                best_sim = sim
-                best_vp = vp_id
+                second_vp, second_sim = best_vp, best_sim
+                best_vp, best_sim = vp_id, sim
+            elif sim > second_sim:
+                second_vp, second_sim = vp_id, sim
 
-        if best_vp and best_sim >= args.threshold:
+        margin = (best_sim - second_sim) if second_vp else None
+
+        if best_vp and best_sim >= args.threshold and (margin is None or margin >= args.min_margin):
             assigned = best_vp
             action = f"matched {best_vp} (sim={best_sim:.3f})"
+        elif best_vp and best_sim >= args.threshold:
+            # clears the threshold but is too close to the runner-up to trust blindly
+            assigned = best_vp
+            action = (
+                f"AMBIGUOUS match {best_vp} (sim={best_sim:.3f}) — too close to "
+                f"{second_vp} (sim={second_sim:.3f}, margin={margin:.3f} < {args.min_margin}) — needs manual review"
+            )
         else:
             assigned = next_vp_id(index)
             np.save(emb_dir / f"{assigned}.npy", vp_emb)
