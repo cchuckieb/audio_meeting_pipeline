@@ -141,6 +141,7 @@ def main():
     ap.add_argument("--threshold", type=float, default=0.78, help="Cosine sim threshold to reuse an existing VP")
     ap.add_argument("--max_segments", type=int, default=12, help="Max segments to sample per speaker")
     ap.add_argument("--min_segment_seconds", type=float, default=1.2, help="Ignore segments shorter than this")
+    ap.add_argument("--min_total_seconds", type=float, default=15.0, help="Skip a speaker entirely if their total selected speech is below this (avoids enrolling/matching against a voiceprint built from too little audio)")
     args = ap.parse_args()
 
     json_path = Path(args.json)
@@ -195,6 +196,19 @@ def main():
 
         if not chosen:
             print(f"[voiceprints] {spk}: no usable segments (all too short). skipping")
+            meeting_map["speakers"][spk] = {
+                "voiceprint_id": "",
+                "note": "skipped: no usable segments",
+            }
+            continue
+
+        total_chosen_dur = sum(float(s["end"]) - float(s["start"]) for s in chosen)
+        if total_chosen_dur < args.min_total_seconds:
+            print(f"[voiceprints] {spk}: only {total_chosen_dur:.1f}s of usable speech (<{args.min_total_seconds}s) — skipping, not enough audio for a reliable voiceprint")
+            meeting_map["speakers"][spk] = {
+                "voiceprint_id": "",
+                "note": f"skipped: insufficient audio ({total_chosen_dur:.1f}s < {args.min_total_seconds}s)",
+            }
             continue
 
         wavs = []
