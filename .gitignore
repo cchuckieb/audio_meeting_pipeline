@@ -10,6 +10,7 @@ diarisation/
 transcripts/
 voice_library/
 embeddings_raw/
+named_transcripts/
 logs/
 cache/
 config/

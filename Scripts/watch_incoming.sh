@@ -6,10 +6,11 @@ PROC="/pipeline/processing"
 DONE="/pipeline/transcripts"
 FAIL="/pipeline/failed"
 LOGDIR="/pipeline/logs"
+NAMED="/pipeline/named_transcripts"
 
 MODEL="${MODEL:-medium}"
 
-mkdir -p "$PROC" "$DONE" "$FAIL" "$LOGDIR"
+mkdir -p "$PROC" "$DONE" "$FAIL" "$LOGDIR" "$NAMED"
 
 echo "$(date '+%F %T') [watcher] started"
 
@@ -54,6 +55,23 @@ while true; do
     if [ $status -eq 0 ]; then
       echo "$(date '+%F %T') [watcher] success $base (${duration}s)"
       mv "$PROC/$base" "$DONE/$base"
+
+      stem="${base%.*}"
+
+      echo "$(date '+%F %T') [watcher] voiceprinting $base" >> "$logfile"
+      python /pipeline/scripts/build_voiceprints.py \
+        --json "/pipeline/diarisation/${stem}.json" \
+        --audio "$DONE/$base" \
+        --out_dir /pipeline/voice_library >> "$logfile" 2>&1 \
+        || echo "$(date '+%F %T') [watcher] voiceprinting FAILED $base — see $logfile" >> "$logfile"
+
+      echo "$(date '+%F %T') [watcher] labeling transcript $base" >> "$logfile"
+      python /pipeline/scripts/label_transcript.py \
+        --json "/pipeline/diarisation/${stem}.json" \
+        --map "/pipeline/voice_library/meetings/${stem}.map.json" \
+        --index /pipeline/voice_library/index.json \
+        --out "$NAMED/${stem}.txt" >> "$logfile" 2>&1 \
+        || echo "$(date '+%F %T') [watcher] labeling FAILED $base — see $logfile" >> "$logfile"
     else
       echo "$(date '+%F %T') [watcher] FAILED $base (${duration}s) — see $logfile"
       mv "$PROC/$base" "$FAIL/$base"
