@@ -1,9 +1,20 @@
-# Data / outputs (do not commit)
+# Data / outputs (do not commit — contains real meeting audio, names, and finances)
 Incoming/
 Processed/
 Diarisation/
 Transcripts/
 Voice_Library/
+incoming/
+processing/
+diarisation/
+transcripts/
+voice_library/
+embeddings_raw/
+logs/
+cache/
+config/
+models/
+failed/
 
 # Audio + outputs
 *.m4a
@@ -21,6 +32,8 @@ __pycache__/
 
 # Secrets / env
 .env
+*.env
+!.env.example
 
 # OS / OneDrive noise
 .DS_Store
