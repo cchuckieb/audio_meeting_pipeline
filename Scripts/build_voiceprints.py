@@ -138,7 +138,7 @@ def main():
     ap.add_argument("--audio", required=True, help="Original audio, e.g. /pipeline/transcripts/RDA_AGM.mp3 or /pipeline/processing/x.mp3")
     ap.add_argument("--out_dir", default="/pipeline/voice_library", help="Voice library root")
     ap.add_argument("--meeting_id", default="", help="Optional name for meeting map file (defaults to json stem)")
-    ap.add_argument("--threshold", type=float, default=0.78, help="Cosine sim threshold to reuse an existing VP")
+    ap.add_argument("--threshold", type=float, default=0.7, help="Cosine sim threshold to reuse an existing VP")
     ap.add_argument("--max_segments", type=int, default=12, help="Max segments to sample per speaker")
     ap.add_argument("--min_segment_seconds", type=float, default=1.2, help="Ignore segments shorter than this")
     ap.add_argument("--min_total_seconds", type=float, default=15.0, help="Skip a speaker entirely if their total selected speech is below this (avoids enrolling/matching against a voiceprint built from too little audio)")
